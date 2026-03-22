@@ -1,0 +1,62 @@
+#include <WiFi.h>
+#include <WebServer.h>
+
+const char* ssid = "YOUR_SSID";
+const char* password = "YOUR_PASSWORD";
+
+WebServer server(80);
+
+int ledState = LOW;  // пример переменной
+
+// Функция, которую хотим вызывать из HTML
+String toggleLED() {
+  ledState = !ledState;
+  return ledState ? "ON" : "OFF";
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  // Подключаемся к Wi-Fi
+  WiFi.begin(ssid, password);
+  while(WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected! IP: " + WiFi.localIP().toString());
+
+  // Главная страница
+  server.on("/", HTTP_GET, [](){
+    server.send(200, "text/html", R"rawliteral(
+      <!DOCTYPE html>
+      <html>
+      <head><title>ESP32 AJAX Example</title></head>
+      <body>
+        <h1>ESP32 Control</h1>
+        <p>LED is <span id="ledState">OFF</span></p>
+        <button onclick="toggleLED()">Toggle LED</button>
+
+        <script>
+          function toggleLED() {
+            fetch('/toggle')           // вызываем C++ функцию на ESP32
+              .then(res => res.text())
+              .then(state => document.getElementById('ledState').innerText = state);
+          }
+        </script>
+      </body>
+      </html>
+    )rawliteral");
+  });
+
+  // Роут для вызова C++ функции
+  server.on("/toggle", HTTP_GET, [](){
+    String state = toggleLED();   // вызов функции C++
+    server.send(200, "text/plain", state);
+  });
+
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+}

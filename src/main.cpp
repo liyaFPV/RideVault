@@ -3,6 +3,7 @@
 #include "SD.h"
 #include "config.h"
 #include <TinyGPS++.h>
+#include "ble.h"
 
 // SPI для SD
 SPIClass spi_ext(FSPI);
@@ -12,11 +13,7 @@ TinyGPSPlus gps;
 HardwareSerial gpsSerial(1);
 
 void setup() {
-
     Serial.begin(115200);
-    delay(2000);
-
-    Serial.println("Старт...");
 
     // ---- SD CARD ----
     pinMode(SD_CS, OUTPUT);
@@ -35,7 +32,7 @@ void setup() {
         Serial.println("SD карта готова");
         Serial.printf("Размер: %llu MB\n", SD.cardSize() / (1024 * 1024));
     }
-
+    ble_begin();
     // ---- GPS ----
     Serial.println("Запуск GPS...");
 
@@ -45,6 +42,7 @@ void setup() {
 }
 
 void loop() {
+  ble_loop();
   while (gpsSerial.available()) {
     char c = gpsSerial.read();
     gps.encode(c);
@@ -80,4 +78,5 @@ void loop() {
 
         Serial.println("-----------------");
     }
+    delay(1000);
 }

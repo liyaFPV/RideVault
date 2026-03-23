@@ -1,8 +1,22 @@
 #include "Odometer.h"
+#include <SD.h>
+#include <ArduinoJson.h>
+#include <TinyGPS++.h>
 
-int time_start=millis();
+// Определения переменных
+double ode = 0;
+double ode1 = 0;
+double ode2 = 0;
+double ode3 = 0;
+
+double avgSpeed = 0;
+float maxSpeed = 0;
+
+int time_start = millis();
 int time_ms;
+extern TinyGPSPlus gps;
 
+// Остальной код функций, который у тебя есть
 double lastLat0,lastLng0 = 0;
 double ode0;
 void updateOdometer0(){

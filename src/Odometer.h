@@ -1,13 +1,21 @@
+#ifndef ODOMETER_H
+#define ODOMETER_H
+
 #include <Arduino.h>
-#include "config.h"
-#include <TinyGPS++.h>
-#include <SPI.h>
-#include <SD.h>
-#include <ArduinoJson.h>
 
-extern TinyGPSPlus gps;
-double ode,ode1,ode2,ode3;
-float maxSpeed, avgSpeed;
+// Объявления переменных
+extern double ode;
+extern double ode1;
+extern double ode2;
+extern double ode3;
 
-void updateAllOdometer();
+extern double avgSpeed;
+extern float maxSpeed;
+
+void GetMaxSpeed();
+void GetAgvSpeed();
 void setupOdometer();
+void saveOdometer();
+void updateAllOdometer();
+
+#endif

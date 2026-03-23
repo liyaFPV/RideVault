@@ -68,10 +68,9 @@ void loop() {
                           gps.date.month(),
                           gps.date.year());
         }
-
         if (gps.time.isValid()) {
             Serial.printf("Time: %02d:%02d:%02d\n",
-                          gps.time.hour()+5,
+                          gps.time.hour()+(time_zone),
                           gps.time.minute(),
                           gps.time.second());
         }

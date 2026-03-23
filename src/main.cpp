@@ -4,12 +4,14 @@
 #include "config.h"
 #include <TinyGPS++.h>
 #include "ble.h"
+#include "Odometer.h"
 
 // SPI для SD
 SPIClass spi_ext(FSPI);
 
 // GPS
 TinyGPSPlus gps;
+
 HardwareSerial gpsSerial(1);
 
 void setup() {
@@ -39,6 +41,7 @@ void setup() {
     gpsSerial.begin(GPS_BAUD, SERIAL_8N1, GPS_RX, GPS_TX);
 
     Serial.println("GPS готов");
+    setupOdometer();
 }
 
 void loop() {
@@ -77,5 +80,6 @@ void loop() {
 
         Serial.println("-----------------");
     }
+    updateAllOdometer();
     delay(1000);
 }

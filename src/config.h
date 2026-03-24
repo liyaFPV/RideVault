@@ -11,5 +11,9 @@
 #define time_zone 5
 /*BAT CONFIG*/
 #define BAT_V 1
-
-#define FW_V "RideVault 0.2B"
+/*BUZER CONFIG*/
+#define BUZER_PIN 10
+/*BTN CONFIG*/
+#define BTN_PIN 0
+/*FW CONFIG*/
+#define FW_V "RideVault 0.3B"

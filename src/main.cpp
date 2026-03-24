@@ -5,6 +5,7 @@
 #include <TinyGPS++.h>
 #include "ble.h"
 #include "Odometer.h"
+#include "mid.h"
 
 // SPI для SD
 SPIClass spi_ext(FSPI);
@@ -13,6 +14,8 @@ SPIClass spi_ext(FSPI);
 TinyGPSPlus gps;
 
 HardwareSerial gpsSerial(1);
+
+bool gpsFLAG = false;
 
 void setup() {
     Serial.begin(115200);
@@ -24,6 +27,7 @@ void setup() {
     pinMode(SD_SCK, OUTPUT);
     pinMode(SD_MOSI, OUTPUT);
     pinMode(SD_MISO, INPUT_PULLUP);
+    pinMode(BUZER_PIN,OUTPUT);
 
     Serial.println("Инициализация SPI...");
     spi_ext.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
@@ -42,6 +46,8 @@ void setup() {
 
     Serial.println("GPS готов");
     setupOdometer();
+
+    play_mid(system_start);
 }
 
 void loop() {
@@ -50,7 +56,7 @@ void loop() {
     char c = gpsSerial.read();
     gps.encode(c);
   } 
-    // если получили новую позицию
+  updateAllOdometer();
     if (gps.location.isUpdated()) {
 
         Serial.println();
@@ -77,9 +83,23 @@ void loop() {
                           gps.time.minute(),
                           gps.time.second());
         }
+        Serial.printf("speed %.2f\n",gps.speed.kmph());
+        Serial.printf("ode %02d\n",ode_km);
+        Serial.printf("ode1 %02d\n",ode1_km);
+        Serial.printf("ode2 %02d\n",ode2_km);
+        Serial.printf("ode3 %02d\n",ode3_km);
 
         Serial.println("-----------------");
     }
-    updateAllOdometer();
+    
+    if(gps.satellites.value()>0 and !gpsFLAG){
+        gpsFLAG = true;
+        play_mid(gps_found);
+    }
+
+    if(gps.satellites.value()<=0 and gpsFLAG){
+        gpsFLAG = false;
+        play_mid(gps_lost);
+    }
     delay(1000);
 }

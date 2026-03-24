@@ -2,12 +2,22 @@
 
 bool deviceConnected = false;
 
-#define SERVICE_UUID        "12345678-1234-1234-1234-123456789abc"
-#define TEMP_CHAR_UUID      "11111111-1111-1111-1111-111111111111"
-#define HUM_CHAR_UUID       "22222222-2222-2222-2222-222222222222"
+#define SERVICE_UUID         "12345678-1234-1234-1234-123456789abc"
+#define SPEED_CHAR_UUID      "11111111-1111-1111-1111-111111111111"
+#define AVG_SPEED_CHAR_UUID  "22222222-2222-2222-2222-222222222222"
+#define MAX_SPEED_CHAR_UUID  "33333333-3333-3333-3333-333333333333"
+#define ODE1_CHAR_UUID       "44444444-4444-4444-4444-444444444444"
+#define ODE2_CHAR_UUID       "55555555-5555-5555-5555-555555555555"
+#define ODE3_CHAR_UUID       "66666666-6666-6666-6666-666666666666"
 
-BLECharacteristic* tempCharacteristic;
-BLECharacteristic* humCharacteristic;
+BLECharacteristic* speed;
+BLECharacteristic* avg_speed;
+BLECharacteristic* max_speed;
+BLECharacteristic* ode1;
+BLECharacteristic* ode2;
+BLECharacteristic* ode3;
+
+
 
 class MyServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) { deviceConnected = true; }
@@ -22,19 +32,47 @@ void ble_begin() {
   
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  tempCharacteristic = pService->createCharacteristic(
-                        TEMP_CHAR_UUID,
+  speed = pService->createCharacteristic(
+                        SPEED_CHAR_UUID,
                         BLECharacteristic::PROPERTY_READ |
                         BLECharacteristic::PROPERTY_NOTIFY
                       );
-  tempCharacteristic->addDescriptor(new BLE2902());
+  speed->addDescriptor(new BLE2902());
 
-  humCharacteristic = pService->createCharacteristic(
-                        HUM_CHAR_UUID,
+  avg_speed = pService->createCharacteristic(
+                        AVG_SPEED_CHAR_UUID,
                         BLECharacteristic::PROPERTY_READ |
                         BLECharacteristic::PROPERTY_NOTIFY
                       );
-  humCharacteristic->addDescriptor(new BLE2902());
+  avg_speed->addDescriptor(new BLE2902());
+
+  max_speed = pService->createCharacteristic(
+                        MAX_SPEED_CHAR_UUID,
+                        BLECharacteristic::PROPERTY_READ |
+                        BLECharacteristic::PROPERTY_NOTIFY
+                      );
+  max_speed->addDescriptor(new BLE2902());
+
+  ode1 = pService->createCharacteristic(
+                        ODE1_CHAR_UUID,
+                        BLECharacteristic::PROPERTY_READ |
+                        BLECharacteristic::PROPERTY_NOTIFY
+                      );
+  ode1->addDescriptor(new BLE2902());
+
+  ode2 = pService->createCharacteristic(
+                        ODE2_CHAR_UUID,
+                        BLECharacteristic::PROPERTY_READ |
+                        BLECharacteristic::PROPERTY_NOTIFY
+                      );
+  ode2->addDescriptor(new BLE2902());
+
+  ode3 = pService->createCharacteristic(
+                        ODE3_CHAR_UUID,
+                        BLECharacteristic::PROPERTY_READ |
+                        BLECharacteristic::PROPERTY_NOTIFY
+                      );
+  ode3->addDescriptor(new BLE2902());
 
   pService->start();
 
@@ -45,13 +83,25 @@ void ble_begin() {
 
 void ble_loop() {
   if (deviceConnected) {
-    float temp = 25.5;
-    float hum = 60.2;
+    if (gps.location.isUpdated()){
+      double spd = gps.speed.kmph();
+      speed->setValue(spd);
+      speed->notify();
+    }
 
-    tempCharacteristic->setValue(temp);
-    tempCharacteristic->notify();
+    avg_speed->setValue(avgSpeed);
+    avg_speed->notify();
 
-    humCharacteristic->setValue(hum);
-    humCharacteristic->notify();
+    max_speed->setValue(maxSpeed);
+    max_speed->notify();
+
+    ode1->setValue(ode1_km);
+    ode1->notify();
+
+    ode2->setValue(ode2_km);
+    ode2->notify();
+
+    ode3->setValue(ode3_km);
+    ode3->notify();
   }
 }

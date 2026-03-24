@@ -4,10 +4,10 @@
 #include <Arduino.h>
 
 // Объявления переменных
-extern double ode;
-extern double ode1;
-extern double ode2;
-extern double ode3;
+extern double ode_km;
+extern double ode1_km;
+extern double ode2_km;
+extern double ode3_km;
 
 extern double avgSpeed;
 extern float maxSpeed;

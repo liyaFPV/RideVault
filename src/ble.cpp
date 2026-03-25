@@ -1,7 +1,7 @@
 #include "ble.h"
 
 bool deviceConnected = false;
-
+bool bledeviceConnected = false;
 #define SERVICE_UUID         "12345678-1234-1234-1234-123456789abc"
 #define SPEED_CHAR_UUID      "11111111-1111-1111-1111-111111111111"
 #define AVG_SPEED_CHAR_UUID  "22222222-2222-2222-2222-222222222222"
@@ -82,26 +82,38 @@ void ble_begin() {
 }
 
 void ble_loop() {
-  if (deviceConnected) {
-    if (gps.location.isUpdated()){
-      double spd = gps.speed.kmph();
-      speed->setValue(spd);
-      speed->notify();
-    }
 
-    avg_speed->setValue(avgSpeed);
+  if (deviceConnected) {
+
+    double spd = gps.speed.kmph();
+
+    speed->setValue(String(spd).c_str());
+    speed->notify();
+
+    avg_speed->setValue(String(avgSpeed).c_str());
     avg_speed->notify();
 
-    max_speed->setValue(maxSpeed);
+    max_speed->setValue(String(maxSpeed).c_str());
     max_speed->notify();
 
-    ode1->setValue(ode1_km);
+    ode1->setValue(String(ode1_km).c_str());
     ode1->notify();
 
-    ode2->setValue(ode2_km);
+    ode2->setValue(String(ode2_km).c_str());
     ode2->notify();
 
-    ode3->setValue(ode3_km);
+    ode3->setValue(String(ode3_km).c_str());
     ode3->notify();
   }
+
+  if (deviceConnected && !bledeviceConnected) {
+      bledeviceConnected = true;
+      play_mid(ble_connected);
+  }
+
+  if (!deviceConnected && bledeviceConnected) {
+      bledeviceConnected = false;
+      play_mid(ble_disconnected);
+  }
+
 }

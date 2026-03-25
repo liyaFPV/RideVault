@@ -5,6 +5,7 @@
 #include <BLE2902.h>
 #include <TinyGPS++.h>
 #include "Odometer.h"
+#include "mid.h"
 
 extern TinyGPSPlus gps;
 

@@ -30,7 +30,6 @@ void setup() {
 
     Serial.println("GPS готов");
     setupOdometer();
-    setup_csv();
     play_mid(system_start);
 }
 
@@ -40,9 +39,9 @@ void loop() {
         char c = gpsSerial.read();
         gps.encode(c);
     } 
-    updateAllOdometer();
-    update_csv();
-    if (true) {
+    if (gpsFLAG) {
+        updateAllOdometer();
+        update_csv();
         Serial.println();
         Serial.println("------ GPS ------");
 
@@ -76,11 +75,11 @@ void loop() {
         Serial.println("-----------------");
     }
     
-    if(gps.satellites.value()>0 and !gpsFLAG){
+    if(gps.satellites.value()>0 && gps.date.isValid() && !gpsFLAG){
         gpsFLAG = true;
         play_mid(gps_found);
+        setup_csv();
     }
-
     if(gps.satellites.value()<=0 and gpsFLAG){
         gpsFLAG = false;
         play_mid(gps_lost);

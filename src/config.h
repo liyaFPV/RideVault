@@ -16,4 +16,4 @@
 /*BTN CONFIG*/
 #define BTN_PIN 0
 /*FW CONFIG*/
-#define FW_V "RideVault 0.4A"
+#define FW_V "RideVault 0.4b"

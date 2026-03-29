@@ -3,184 +3,177 @@
 #include <ArduinoJson.h>
 #include <TinyGPS++.h>
 
-double ode_km  = 0;
+// Определения переменных
+double ode_km = 0;
 double ode1_km = 0;
 double ode2_km = 0;
 double ode3_km = 0;
 
+double avgSpeed = 0;
+float maxSpeed = 0;
+
+int time_start = millis();
+int time_ms;
 extern TinyGPSPlus gps;
 
-#define ODO_COUNT 5
+double lat,lng=0;
+double lastLat,lastLng = 0;
 
-// индексы одометров
-#define ODO_SYSTEM 0
-#define ODO_TRIP 1
-#define ODO_TRIP1 2
-#define ODO_TRIP2 3
-#define ODO_USER3 4
-
-double odometer[ODO_COUNT] = {0};
-
-double lastLat = 0;
-double lastLng = 0;
-
-float maxSpeed = 0;
-double avgSpeed = 0;
-
-unsigned long startTime = 0;
-unsigned long lastSave = 0;
-
-void updateOdometers()
-{
-    if (!gps.location.isUpdated())
-        return;
-
-    double lat = gps.location.lat();
-    double lng = gps.location.lng();
-
-    if (lastLat != 0 && lastLng != 0)
+double ode0_km;
+void updateOdometer0(){
+    double distance0 = TinyGPSPlus::distanceBetween(
+       lastLat, lastLng,
+        lat, lng
+    );
+   if (distance0 > 0 && distance0 < 1000)
     {
-        double distance = TinyGPSPlus::distanceBetween(
-            lastLat, lastLng,
-            lat, lng);
+        ode0_km += distance0 / 1000.0;
+    }
+}
 
-        if (distance > 0 && distance < 1000)
-        {
-            double km = distance / 1000.0;
+void updateOdometer(){
+    double distance = TinyGPSPlus::distanceBetween(
+        lastLat, lastLng,
+        lat, lng
+    );
+    if (distance > 0 && distance < 1000)
+    {
+        ode_km += distance / 1000.0;
+    }
+}
 
-            for (int i = 0; i < ODO_COUNT; i++)
-            {
-                odometer[i] += km;
-            }
+void updateOdometer1(){
+    double distance1 = TinyGPSPlus::distanceBetween(
+        lastLat, lastLng,
+       lat, lng
+    );
+    if (distance1 > 0 && distance1 < 1000)
+    {
+        ode1_km += distance1 / 1000.0;
+    }
+}
+
+void updateOdometer2(){
+    double distance2 = TinyGPSPlus::distanceBetween(
+        lastLat, lastLng,
+        lat, lng
+    );
+    if (distance2 > 0 && distance2 < 1000)
+    {
+        ode2_km += distance2 / 1000.0;
+    }
+}
+
+void updateOdometer3(){
+    double distance3 = TinyGPSPlus::distanceBetween(
+        lastLat, lastLng,
+        lat, lng
+    );
+    if (distance3 > 0 && distance3 < 1000)
+    {
+        ode3_km += distance3 / 1000.0;
+    }
+}
+
+
+
+void GetMaxSpeed(){
+    if (gps.location.isUpdated()){
+        float speed = gps.speed.kmph(); 
+        if(maxSpeed < speed){
+            maxSpeed=speed;
+        }
+    }
+}
+
+void GetAgvSpeed(){
+    avgSpeed = (ode0_km / (time_ms / 1000.0)) * 3.6;
+}
+
+void setupOdometer() {
+    // Проверяем, существует ли файл
+    if (!SD.exists("/Odometer.json")) {
+        Serial.println("Файл Odometer.json не найден, создаем новый...");
+
+        File newFile = SD.open("/Odometer.json", FILE_WRITE);
+        if (newFile) {
+            // Создаём пустой JSON
+            newFile.println("{\"ode\":0,\"ode1\":0,\"ode2\":0,\"ode3\":0}");
+            newFile.close();
+            Serial.println("Файл создан!");
+        } else {
+            Serial.println("Не удалось создать файл Odometer.json");
+            return;
         }
     }
 
-    lastLat = lat;
-    lastLng = lng;
-}
-
-void resetOdometer(int id)
-{
-    if (id >= 0 && id < ODO_COUNT)
-    {
-        odometer[id] = 0;
-    }
-}
-
-double getOdometer(int id)
-{
-    if (id >= 0 && id < ODO_COUNT)
-        return odometer[id];
-
-    return 0;
-}
-
-void getMaxSpeed()
-{
-    float speed = gps.speed.kmph();
-
-    if (speed > maxSpeed)
-        maxSpeed = speed;
-}
-
-void getAvgSpeed()
-{
-    double time_s = (millis() - startTime) / 1000.0;
-
-    if (time_s > 0)
-        avgSpeed = (odometer[ODO_SYSTEM] / time_s) * 3600.0;
-}
-
-void setupOdometer()
-{
-    startTime = millis();
-
-    if (!SD.exists("/Odometer.json"))
-    {
-        File file = SD.open("/Odometer.json", FILE_WRITE);
-
-        if (file)
-        {
-            StaticJsonDocument<256> doc;
-
-            doc["odo0"] = 0;
-            doc["odo1"] = 0;
-            doc["odo2"] = 0;
-            doc["odo3"] = 0;
-            doc["odo4"] = 0;
-
-            serializeJsonPretty(doc, file);
-            file.close();
-        }
-    }
-
+    // Открываем файл для чтения
     File file = SD.open("/Odometer.json");
-
-    if (!file)
-    {
-        Serial.println("Ошибка открытия Odometer.json");
+    if (!file) {
+        Serial.println("Ошибка открытия файла после создания");
         return;
     }
 
-    StaticJsonDocument<256> doc;
-
+    // Читаем данные из JSON
+    StaticJsonDocument<256> doc;  // Можно заменить на JsonDocument<256> при необходимости
     DeserializationError error = deserializeJson(doc, file);
     file.close();
 
-    if (error)
-    {
-        Serial.println("Ошибка JSON");
+    if (error) {
+        Serial.println("Ошибка парсинга JSON");
         return;
     }
 
-    for (int i = 0; i < ODO_COUNT; i++)
-    {
-        String key = "odo" + String(i);
-        odometer[i] = doc[key] | 0;
-    }
+    // ✅ Сериализация документа перед выводом в Serial
+    serializeJsonPretty(doc, Serial);
+    Serial.println(); // добавляем перевод строки после JSON
 
-    Serial.println("Odometers loaded");
+    ode_km  = doc["ode"].as<double>();
+    ode1_km = doc["ode1"].as<double>();
+    ode2_km = doc["ode2"].as<double>();
+    ode3_km = doc["ode3"].as<double>();
+
+    Serial.println("Odometer загружен!");
 }
 
-void saveOdometer()
-{
+void saveOdometer() {
     File file = SD.open("/Odometer.json", FILE_WRITE);
-
-    if (!file)
-    {
-        Serial.println("Ошибка записи файла");
+    if (!file) {
+        Serial.println("Ошибка открытия файла для записи");
         return;
     }
 
     StaticJsonDocument<256> doc;
+    doc["ode"]  = ode_km;
+    doc["ode1"] = ode1_km;
+    doc["ode2"] = ode2_km;
+    doc["ode3"] = ode3_km;
 
-    for (int i = 0; i < ODO_COUNT; i++)
-    {
-        String key = "odo" + String(i);
-        doc[key] = odometer[i];
-    }
-
+    // Записываем в файл красиво
     serializeJsonPretty(doc, file);
-
     file.close();
 
-    Serial.println("Odometers saved");
+    // ✅ Также можно вывести в Serial для отладки
+    serializeJsonPretty(doc, Serial);
+    Serial.println();
+    Serial.println("Odometer сохранен!");
 }
 
-void updateAllOdometer()
-{
-    updateOdometers();
-
-    getMaxSpeed();
-    getAvgSpeed();
-
-    if (millis() - lastSave > 1000)
-    {
-        saveOdometer();
-        lastSave = millis();
+void updateAllOdometer(){
+    time_ms=millis()-time_start;
+    if (gps.location.isUpdated()){
+        if (lastLat != 0 && lastLng != 0){
+            lat = gps.location.lat();
+            lng = gps.location.lng();
+            updateOdometer();
+            updateOdometer1();
+            updateOdometer2();
+            updateOdometer3();
+            updateOdometer0();
+            GetMaxSpeed();
+            saveOdometer();
+            lastLat = lat;
+            lastLng = lng;
+        }
     }
-    ode_km  = odometer[1];
-    ode1_km = odometer[2];
-    ode2_km = odometer[3];
-    ode3_km = odometer[4];
 }

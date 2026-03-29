@@ -12,7 +12,7 @@ bool sd_init()
     pinMode(SD_CS, OUTPUT);
     digitalWrite(SD_CS, HIGH);
 
-    if (!SD.begin(SD_CS, SPI, 4000000))
+    if (!SD.begin(SD_CS, SPI, 2000000))
     {
         Serial.println("SD init failed");
         return false;

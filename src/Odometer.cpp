@@ -16,8 +16,8 @@ int time_start = millis();
 int time_ms;
 extern TinyGPSPlus gps;
 
-double lat,lng=0;
-double lastLat,lastLng = 0;
+double lat=0,lng=0;
+double lastLat = 0, lastLng = 0;
 
 double ode0_km;
 void updateOdometer0(){
@@ -160,20 +160,20 @@ void saveOdometer() {
 }
 
 void updateAllOdometer(){
-    time_ms=millis()-time_start;
-    if (gps.location.isUpdated()){
-        if (lastLat != 0 && lastLng != 0){
-            lat = gps.location.lat();
-            lng = gps.location.lng();
+    time_ms = millis() - time_start;
+    if (gps.location.isUpdated()) {
+        lat = gps.location.lat();
+        lng = gps.location.lng();
+        if (lastLat != 0 || lastLng != 0) {
             updateOdometer();
+            updateOdometer0();
             updateOdometer1();
             updateOdometer2();
             updateOdometer3();
-            updateOdometer0();
             GetMaxSpeed();
-            saveOdometer();
-            lastLat = lat;
-            lastLng = lng;
         }
+        lastLat = lat;
+        lastLng = lng;
+        saveOdometer();
     }
 }

@@ -67,6 +67,8 @@ void loop() {
                           gps.time.second());
         }
         Serial.printf("speed %.2f\n",gps.speed.kmph());
+        Serial.print("maxSpeed "); Serial.println(maxSpeed);
+        Serial.print("AvgSpeed "); Serial.println(maxSpeed);
         Serial.print("ode ");  Serial.println(ode_km, 2);
         Serial.print("ode1 "); Serial.println(ode1_km, 2);
         Serial.print("ode2 "); Serial.println(ode2_km, 2);

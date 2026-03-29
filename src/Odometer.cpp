@@ -12,7 +12,6 @@ double ode3_km = 0;
 double avgSpeed = 0;
 float maxSpeed = 0;
 
-int time_start = millis();
 int time_ms;
 extern TinyGPSPlus gps;
 
@@ -138,6 +137,7 @@ void GetMaxSpeed(){
 }
 
 void GetAgvSpeed(){
+    Serial.println(ode0_km);
     avgSpeed = (ode0_km / (time_ms / 1000.0)) * 3.6;
 }
 
@@ -211,12 +211,12 @@ void saveOdometer() {
 }
 
 void updateAllOdometer(){
-    time_ms=millis()-time_start;
     updateOdometer();
     updateOdometer1();
     updateOdometer2();
     updateOdometer3();
     updateOdometer0();
+    GetAgvSpeed();
     GetMaxSpeed();
     saveOdometer();
 }

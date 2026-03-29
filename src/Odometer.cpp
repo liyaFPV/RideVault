@@ -14,10 +14,10 @@ extern TinyGPSPlus gps;
 
 // индексы одометров
 #define ODO_SYSTEM 0
-#define ODO_TRIP1 1
-#define ODO_TRIP2 2
-#define ODO_TRIP3 3
-#define ODO_USER  4
+#define ODO_TRIP 1
+#define ODO_TRIP1 2
+#define ODO_TRIP2 3
+#define ODO_USER3 4
 
 double odometer[ODO_COUNT] = {0};
 
@@ -88,7 +88,7 @@ void getAvgSpeed()
     double time_s = (millis() - startTime) / 1000.0;
 
     if (time_s > 0)
-        avgSpeed = (odometer[ODO_USER] / time_s) * 3600.0;
+        avgSpeed = (odometer[ODO_SYSTEM] / time_s) * 3600.0;
 }
 
 void setupOdometer()
@@ -174,13 +174,13 @@ void updateAllOdometer()
     getMaxSpeed();
     getAvgSpeed();
 
-    if (millis() - lastSave > 30000)
+    if (millis() - lastSave > 1000)
     {
         saveOdometer();
         lastSave = millis();
     }
-    ode_km  = odometer[0];
-    ode1_km = odometer[1];
-    ode2_km = odometer[2];
-    ode3_km = odometer[3];
+    ode_km  = odometer[1];
+    ode1_km = odometer[2];
+    ode2_km = odometer[3];
+    ode3_km = odometer[4];
 }

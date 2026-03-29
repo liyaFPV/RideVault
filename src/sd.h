@@ -1,0 +1,9 @@
+#pragma once
+#include <Arduino.h>
+#include <SPI.h>
+#include <SD.h>
+#include "config.h"
+bool sd_init();
+void sd_info();
+uint64_t sd_get_size();
+bool get_sdStatus();

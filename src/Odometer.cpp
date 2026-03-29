@@ -30,7 +30,7 @@ void updateOdometer0(){
                 lastLat0, lastLng0,
                 lat0, lng0
             );
-            if (distance0 > 2 && distance0 < 1000)
+            if (distance0 > 0 && distance0 < 1000)
             {
                 ode0_km += distance0 / 1000.0;
             }
@@ -52,7 +52,7 @@ void updateOdometer(){
                 lastLat, lastLng,
                 lat, lng
             );
-            if (distance > 2 && distance < 1000)
+            if (distance > 0 && distance < 1000)
             {
                 ode_km += distance / 1000.0;
             }
@@ -74,7 +74,7 @@ void updateOdometer1(){
                 lastLat1, lastLng1,
                 lat1, lng1
             );
-            if (distance1 > 2 && distance1 < 1000)
+            if (distance1 > 0 && distance1 < 1000)
             {
                 ode1_km += distance1 / 1000.0;
             }
@@ -96,7 +96,7 @@ void updateOdometer2(){
                 lastLat2, lastLng2,
                 lat2, lng2
             );
-            if (distance2 > 2 && distance2 < 1000)
+            if (distance2 > 0 && distance2 < 1000)
             {
                 ode2_km += distance2 / 1000.0;
             }
@@ -118,7 +118,7 @@ void updateOdometer3(){
                 lastLat3, lastLng3,
                 lat3, lng3
             );
-            if (distance3 > 2 && distance3 < 1000)
+            if (distance3 > 0 && distance3 < 1000)
             {
                 ode3_km += distance3 / 1000.0;
             }
@@ -141,40 +141,73 @@ void GetAgvSpeed(){
     avgSpeed = (ode0_km / (time_ms / 1000.0)) * 3.6;
 }
 
-void setupOdometer(){
+void setupOdometer() {
+    // Проверяем, существует ли файл
+    if (!SD.exists("/Odometer.json")) {
+        Serial.println("Файл Odometer.json не найден, создаем новый...");
+
+        File newFile = SD.open("/Odometer.json", FILE_WRITE);
+        if (newFile) {
+            // Создаём пустой JSON
+            newFile.println("{\"ode\":0,\"ode1\":0,\"ode2\":0,\"ode3\":0}");
+            newFile.close();
+            Serial.println("Файл создан!");
+        } else {
+            Serial.println("Не удалось создать файл Odometer.json");
+            return;
+        }
+    }
+
+    // Открываем файл для чтения
     File file = SD.open("/Odometer.json");
     if (!file) {
-        Serial.println("Ошибка открытия файла");
+        Serial.println("Ошибка открытия файла после создания");
         return;
-    }else{
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, file);
-        if (error) {
-        Serial.println("Ошибка JSON");
-        return;
-        }
-        ode_km = doc["ode"];
-        ode1_km = doc["ode1"];
-        ode2_km = doc["ode2"];
-        ode3_km = doc["ode3"];
     }
+
+    // Читаем данные из JSON
+    StaticJsonDocument<256> doc;  // Можно заменить на JsonDocument<256> при необходимости
+    DeserializationError error = deserializeJson(doc, file);
+    file.close();
+
+    if (error) {
+        Serial.println("Ошибка парсинга JSON");
+        return;
+    }
+
+    // ✅ Сериализация документа перед выводом в Serial
+    serializeJsonPretty(doc, Serial);
+    Serial.println(); // добавляем перевод строки после JSON
+
+    ode_km  = doc["ode"].as<double>();
+    ode1_km = doc["ode1"].as<double>();
+    ode2_km = doc["ode2"].as<double>();
+    ode3_km = doc["ode3"].as<double>();
+
+    Serial.println("Odometer загружен!");
 }
 
-void saveOdometer(){
-    JsonDocument doc1;
-    doc1["ode"] = ode_km;
-    doc1["ode1"] = ode1_km;
-    doc1["ode2"] = ode2_km;
-    doc1["ode3"] = ode3_km;
+void saveOdometer() {
     File file = SD.open("/Odometer.json", FILE_WRITE);
     if (!file) {
-    Serial.println("Ошибка открытия файла");
-    return;
-    }else{
-        serializeJsonPretty(doc1, file);
-        file.close();
+        Serial.println("Ошибка открытия файла для записи");
+        return;
     }
 
+    StaticJsonDocument<256> doc;
+    doc["ode"]  = ode_km;
+    doc["ode1"] = ode1_km;
+    doc["ode2"] = ode2_km;
+    doc["ode3"] = ode3_km;
+
+    // Записываем в файл красиво
+    serializeJsonPretty(doc, file);
+    file.close();
+
+    // ✅ Также можно вывести в Serial для отладки
+    serializeJsonPretty(doc, Serial);
+    Serial.println();
+    Serial.println("Odometer сохранен!");
 }
 
 void updateAllOdometer(){

@@ -1,14 +1,12 @@
 #include <Arduino.h>
 #include "SPI.h"
-#include "SD.h"
+#include "sd.h"
 #include "config.h"
 #include <TinyGPS++.h>
 #include "ble.h"
 #include "Odometer.h"
 #include "mid.h"
-
-// SPI для SD
-SPIClass spi_ext(FSPI);
+#include "gpsloger.h"
 
 // GPS
 TinyGPSPlus gps;
@@ -19,25 +17,11 @@ bool gpsFLAG = false;
 
 void setup() {
     Serial.begin(115200);
-
-    // ---- SD CARD ----
-    pinMode(SD_CS, OUTPUT);
-    digitalWrite(SD_CS, HIGH);
-
-    pinMode(SD_SCK, OUTPUT);
-    pinMode(SD_MOSI, OUTPUT);
-    pinMode(SD_MISO, INPUT_PULLUP);
     pinMode(BUZER_PIN,OUTPUT);
-
-    Serial.println("Инициализация SPI...");
-    spi_ext.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
-
-    if (!SD.begin(SD_CS, spi_ext, 1000000)) {
-        Serial.println("Ошибка SD карты");
-    } else {
-        Serial.println("SD карта готова");
-        Serial.printf("Размер: %llu MB\n", SD.cardSize() / (1024 * 1024));
-    }
+    ledcSetup(0, 2000, 8);
+    ledcAttachPin(BUZER_PIN, 0);
+    sd_init();
+    sd_info();
     ble_begin();
     // ---- GPS ----
     Serial.println("Запуск GPS...");
@@ -46,19 +30,19 @@ void setup() {
 
     Serial.println("GPS готов");
     setupOdometer();
-
+    setup_csv();
     play_mid(system_start);
 }
 
 void loop() {
   ble_loop();
-  while (gpsSerial.available()) {
-    char c = gpsSerial.read();
-    gps.encode(c);
-  } 
-  updateAllOdometer();
-    if (gps.location.isUpdated()) {
-
+    while (gpsSerial.available()) {
+        char c = gpsSerial.read();
+        gps.encode(c);
+    } 
+    updateAllOdometer();
+    update_csv();
+    if (true) {
         Serial.println();
         Serial.println("------ GPS ------");
 
@@ -84,10 +68,10 @@ void loop() {
                           gps.time.second());
         }
         Serial.printf("speed %.2f\n",gps.speed.kmph());
-        Serial.printf("ode %02d\n",ode_km);
-        Serial.printf("ode1 %02d\n",ode1_km);
-        Serial.printf("ode2 %02d\n",ode2_km);
-        Serial.printf("ode3 %02d\n",ode3_km);
+        Serial.print("ode ");  Serial.println(ode_km, 2);
+        Serial.print("ode1 "); Serial.println(ode1_km, 2);
+        Serial.print("ode2 "); Serial.println(ode2_km, 2);
+        Serial.print("ode3 "); Serial.println(ode3_km, 2);
 
         Serial.println("-----------------");
     }
